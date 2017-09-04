@@ -11,13 +11,13 @@ ADD build/distributions/cs5356_a2.tar  /
 # The .tar file that gradle builds includes everything in src/main, but we also need
 # our appconfig.yml (which is not part of the .tar that gradle builds) so we must
 # add it explicitly
-ADD appconfig.yml /skeleton/
+ADD appconfig.yml /cs5356_a2/
 
 # Convenience if we ever want to log into the image and snoop around
-WORKDIR /skeleton
+WORKDIR /cs5356_a2
 
 # The server is runs on 8080 inside the running container, so we need to expose that port
 EXPOSE 8080
 
 # When a new container is created, the server program should be run.
-ENTRYPOINT ["/skeleton/bin/skeleton", "server", "appconfig.yml"]
+ENTRYPOINT ["/cs5356_a2/bin/cs5356_a2", "server", "appconfig.yml"]
