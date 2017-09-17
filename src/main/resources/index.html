@@ -50,11 +50,11 @@
                 for (var i = 0; i < receipts.length; i++) {
                     var receipt = receipts[i];
                     $(`<div class="row receipt">
-<div class="col-md-3 created">${receipt.created}</div>
-<div class="col-md-3 merchant">${receipt.merchantName}</div>
-<div class="col-md-3 amount">${receipt["value"]}</div>
-<div class="col-md-3 tags">${receipt.tags}</div>
-</div>`).appendTo("#receiptList");
+                        <div class="col-md-3 created">${receipt.created}</div>
+                        <div class="col-md-3 merchant">${receipt.merchantName}</div>
+                        <div class="col-md-3 amount">${receipt["value"]}</div>
+                        <div class="col-md-3 tags">${receipt.tags}</div>
+                        </div>`).appendTo("#receiptList");
                 }
 
             })

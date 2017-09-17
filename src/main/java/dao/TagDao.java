@@ -44,6 +44,13 @@ public class TagDao {
         }
     }
 
+    public List<String> getTagsForReceipt(Integer receiptId) {
+        return dsl.select(TAGS.TAG_NAME)
+                .from(TAGS)
+                .where(TAGS.RECEIPT_ID.eq(receiptId))
+                .fetch(TAGS.TAG_NAME);
+    }
+
     public List<ReceiptsRecord> getReceiptsByTag(String tagName) {
         return dsl.select()
                 .from(RECEIPTS)
