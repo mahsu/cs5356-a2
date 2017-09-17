@@ -2,14 +2,20 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="style.css" />
-    <script data-require="jquery@*" data-semver="3.1.1" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css"/>
     <style>
-        #container {border: 1px solid brown;}
-        H1 {float: left;}
+        #container {
+            border: 1px solid brown;
+        }
 
-        .button{
-            background-color:#55A;
+        H1 {
+            float: left;
+        }
+
+        .button {
+            background-color: #55A;
             border: 1px solid #229;
             width: 100px;
             float: right;
@@ -29,30 +35,63 @@
         }
 
     </style>
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
     <script>
         // This is the idiomatic way to ensure that JQuery does not
         // execute until the page has loaded
-        $(function(){
+        $(function () {
             const api = ""; // <- do not need a root api URL if this page is served directly by the API
 
-            $.getJSON(api+"/receipts", function(receipts){
-                for(var i=0; i < receipts.length; i++) {
+            $.getJSON(api + "/receipts", function (receipts) {
+                console.log(receipts);
+                for (var i = 0; i < receipts.length; i++) {
                     var receipt = receipts[i];
-                    $(`<div class="receipt">${receipt.merchantName}<div><span class="receiptTag">t1</span></div></div>`)
-                        .appendTo($("#receiptList"));
+                    $(`<div class="row receipt">
+<div class="col-md-3 created">${receipt.created}</div>
+<div class="col-md-3 merchant">${receipt.merchantName}</div>
+<div class="col-md-3 amount">${receipt["value"]}</div>
+<div class="col-md-3 tags">${receipt.tags}</div>
+</div>`).appendTo("#receiptList");
                 }
 
             })
         })
     </script>
+    <!--
+        Every receipt must have the following fields available: merchant, amount and tags.
+
+        The merchant must be selectable using the following JQuery selector: $('.merchant', $('.receipt')[0]).text().
+        The amount must be selectable using the following JQuery selector: $('.amount', $('.receipt')[0]).text(). Don't add any '$' or white spaces around the amounts in the column.
+        The tags must be selectable using the following JQuery selector: $('.tags', $('.receipt')[0]).text().
+        -->
 </head>
 
 <body>
-<DIV id="container">
-    <h1>My receipts</h1>
-    <div class="button">+</div>
+<DIV class="container" id="container">
+    <div class="row">
+        <h1>My receipts</h1>
+        <div class="button">+</div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            Time
+        </div>
+        <div class="col-md-3">
+            Merchant
+        </div>
+        <div class="col-md-3">
+            $
+        </div>
+        <div class="col-md-3">
+            Tags
+        </div>
+    </div>
     <div id="receiptList">
     </div>
+
 </DIV>
 </body>
 
