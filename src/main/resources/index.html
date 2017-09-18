@@ -4,35 +4,25 @@
 <head>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
           integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css"/>
     <style>
-        #container {
-            border: 1px solid brown;
+        #header {
+            margin-top: 10px;
+        }
+
+        #add-receipt {
+            width: 100px;
+            float: right
+        }
+
+        #new-receipt-form {
+            margin: 20px 5px 30px 5px;
+            display: none;
         }
 
         H1 {
             float: left;
         }
 
-        .button {
-            background-color: #55A;
-            border: 1px solid #229;
-            width: 100px;
-            float: right;
-            font-size: 2em;
-            color: white;
-            text-align: center;
-        }
-
-        #receiptList {
-            border: 1px solid green;
-            clear: both;
-        }
-
-        .receipt {
-            background-color: #eee;
-            margin-bottom: 5px;
-        }
 
     </style>
     <script
@@ -49,16 +39,72 @@
                 console.log(receipts);
                 for (var i = 0; i < receipts.length; i++) {
                     var receipt = receipts[i];
-                    $(`<div class="row receipt">
+                    addReceiptRow(receipt);
+
+                }
+
+            });
+
+            function addReceiptRow(receipt) {
+                var tagstr = "";
+                for (let tag of receipt.tags) {
+                    tagstr += `<button class="tagvalue">${tag}</button>`
+                }
+                $(`<div class="row receipt" data-receipt-id="${receipt.id}">
                         <div class="col-md-3 created">${receipt.created}</div>
                         <div class="col-md-3 merchant">${receipt.merchantName}</div>
                         <div class="col-md-3 amount">${receipt["value"]}</div>
-                        <div class="col-md-3 tags">${receipt.tags}</div>
+                        <div class="col-md-3 tags">${tagstr}</div>
                         </div>`).appendTo("#receiptList");
-                }
 
-            })
-        })
+
+            }
+
+            function clearReceiptFormFields() {
+                $("#merchant").val("");
+                $("#amount").val("");
+                $("#new-receipt-form").hide();
+            }
+
+            $("#add-receipt").click(function (e) {
+                e.preventDefault();
+                $("#new-receipt-form").show();
+            });
+
+            $("#cancel-receipt").click(function (e) {
+                e.preventDefault();
+                clearReceiptFormFields();
+            });
+
+            $("#save-receipt").click(function (e) {
+                e.preventDefault();
+                var formdata = {
+                    merchant: $("#merchant").val(),
+                    amount: $("#amount").val()
+                };
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: api + "/receipts",
+                    data: JSON.stringify(formdata),
+                    contentType: "application/json; charset=UTF-8"
+                })
+                    .done(function (data) {
+                        console.log(data);
+                        var date = new Date();
+                        clearReceiptFormFields();
+                        console.log("Reciept successfully added!");
+                        var receipt = {
+                            merchantName: formdata.merchant,
+                            value: formdata.amount,
+                            id: data,
+                            created: date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds(),
+                            tags: []
+                        };
+                        addReceiptRow(receipt);
+                    });
+            });
+        });
     </script>
     <!--
         Every receipt must have the following fields available: merchant, amount and tags.
@@ -71,9 +117,31 @@
 
 <body>
 <DIV class="container" id="container">
-    <div class="row">
-        <h1>My receipts</h1>
-        <div class="button">+</div>
+    <div id="header" class="row">
+        <div class="col-md-6">
+            <h1>My receipts</h1>
+        </div>
+        <div class="col-md-6">
+            <button id="add-receipt" class="btn btn-primary">+</button>
+        </div>
+
+
+    </div>
+    <div id="new-receipt-form" class="row">
+        <div class="col-md-6">
+            <form>
+                <div class="form-group">
+                    <label for="merchant">Merchant</label>
+                    <input type="text" class="form-control" id="merchant" placeholder="Merchant">
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <input type="number" class="form-control" id="amount" placeholder="Amount">
+                </div>
+                <button id="cancel-receipt" class="btn btn-danger">Cancel</button>
+                <button id="save-receipt" class="btn btn-success">Submit</button>
+            </form>
+        </div>
     </div>
     <div class="row">
         <div class="col-md-3">
