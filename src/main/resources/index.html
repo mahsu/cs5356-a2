@@ -48,7 +48,7 @@
             function addReceiptRow(receipt) {
                 var tagstr = "";
                 for (let tag of receipt.tags) {
-                    tagstr += `<button class="btn tagValue" data-tag-value="${tag}">${tag} x</button>`
+                    tagstr += `<button class="btn btn-default tagValue" data-tag-value="${tag}">${tag} x</button>`
                 }
                 tagstr += "<button class='btn btn-primary add-tag'>Add +</button>";
                 $(`<div class="row receipt" data-receipt-id="${receipt.id}">
@@ -107,8 +107,28 @@
             });
 
             $("#receiptList").on("click", ".add-tag", function (event) {
+                var tagInput = "<input type='text' class='form-control tag_input'/>";
+                $(tagInput).insertBefore(this);
+            });
+
+            $("#receiptList").on("keypress", ".tag_input", function (e) {
+                var _this = this;
                 var receiptId = $(this).parents(".receipt").data("receipt-id");
-                console.log(receiptId);
+                var key = e.which;
+                var tag = $(this).val();
+                if (key === 13) {
+                    $.ajax({
+                        type: "PUT",
+                        url: api + `/tags/${tag}`,
+                        data: JSON.stringify(receiptId),
+                        contentType: "application/json; charset=UTF-8"
+                    }).done(function (result) {
+                        $(`<button class="btn btn-default tagValue" data-tag-value="${tag}">${tag} x</button>`).insertBefore(_this);
+                        $(_this).remove();
+                        console.log(result);
+                    })
+
+                }
             });
 
             $("#receiptList").on("click", ".tagValue", function (event) {
@@ -121,7 +141,7 @@
                     url: api + `/tags/${tag}`,
                     data: JSON.stringify(receiptId),
                     contentType: "application/json; charset=UTF-8"
-                }).done(function(result) {
+                }).done(function (result) {
                     _this.remove();
                     console.log(result);
                 })
