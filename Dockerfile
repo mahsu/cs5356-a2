@@ -13,6 +13,10 @@ ADD build/distributions/cs5356_a2.tar  /
 # add it explicitly
 ADD appconfig.yml /cs5356_a2/
 
+# Add your GCP Service Account API File to the Docker Image
+ADD gc_api_file.json /skeleton/gc_api_file.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=/skeleton/gc_api_file.json
+
 # Convenience if we ever want to log into the image and snoop around
 WORKDIR /cs5356_a2
 
