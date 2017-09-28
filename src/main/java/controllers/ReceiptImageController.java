@@ -3,11 +3,15 @@ package controllers;
 import api.ReceiptSuggestionResponse;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
+
 import java.math.BigDecimal;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+
 import org.hibernate.validator.constraints.NotEmpty;
 
 import static java.lang.System.out;
@@ -28,12 +32,12 @@ public class ReceiptImageController {
     /**
      * This borrows heavily from the Google Vision API Docs.  See:
      * https://cloud.google.com/vision/docs/detecting-fulltext
-     *
+     * <p>
      * YOU SHOULD MODIFY THIS METHOD TO RETURN A ReceiptSuggestionResponse:
-     *
+     * <p>
      * public class ReceiptSuggestionResponse {
-     *     String merchantName;
-     *     String amount;
+     * String merchantName;
+     * String amount;
      * }
      */
     @POST
@@ -47,17 +51,50 @@ public class ReceiptImageController {
 
             String merchantName = null;
             BigDecimal amount = null;
-
-            // Your Algo Here!!
+            
             // Sort text annotations by bounding polygon.  Top-most non-decimal text is the merchant
             // bottom-most decimal text is the total amount
+            List<EntityAnnotation> textAnnotations = res.getTextAnnotationsList();
+            Collections.sort(textAnnotations, new TopBottomComparator());
+
             for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
                 out.printf("Position : %s\n", annotation.getBoundingPoly());
                 out.printf("Text: %s\n", annotation.getDescription());
             }
 
+            //get the top-most non-decimal string
+            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+                String merchant = annotation.getDescription();
+                try {
+                    new BigDecimal(merchant);
+                } catch (NumberFormatException e) {
+                    merchantName = merchant;
+                    break;
+                }
+            }
+
+            //get the bottom-most decimal text
+            for (int i = textAnnotations.size() - 1; i >= 0; i--) {
+                try {
+                    String amt = textAnnotations.get(i).getDescription();
+                    amount = new BigDecimal(amt);
+                    break;
+                } catch (NumberFormatException e) {
+                }
+            }
+
             //TextAnnotation fullTextAnnotation = res.getFullTextAnnotation();
             return new ReceiptSuggestionResponse(merchantName, amount);
+        }
+    }
+
+    public static class TopBottomComparator implements Comparator<EntityAnnotation> {
+
+        @Override
+        public int compare(EntityAnnotation a, EntityAnnotation b) {
+            Vertex va = a.getBoundingPoly().getVertices(0);
+            Vertex vb = b.getBoundingPoly().getVertices(0);
+            return va.getY() < vb.getY() ? -1 : va.getY() == vb.getY() ? 0 : 1;
         }
     }
 }
