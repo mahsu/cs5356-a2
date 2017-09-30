@@ -24,8 +24,8 @@
         }
 
         video {
-            width: 400px;
-            height: 300px;
+            width: 550px;
+            height: 450px;
             border: 1px solid black;
         }
 
@@ -42,6 +42,8 @@
             integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
             crossorigin="anonymous"></script>
     <script>
+        let imageCapture;
+        let track;
         // This is the idiomatic way to ensure that JQuery does not
         // execute until the page has loaded
         $(function () {
@@ -163,10 +165,10 @@
             function attachMediaStream(mediaStream) {
                 $('video')[0].srcObject = mediaStream;
 
-                // Saving the track allows us to capture a photo
-                const track = mediaStream.getVideoTracks()[0];
-                imageCapture = new ImageCapture(track);
-            }
+            // Saving the track allows us to capture a photo
+            track = mediaStream.getVideoTracks()[0];
+            imageCapture = new ImageCapture(track);
+        }
 
             function startVideo() {
                 navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: "environment"}}})
@@ -180,36 +182,34 @@
                     })
             }
 
-            function takeSnapshot() {
-                // create a CANVAS element that is same size as the image
-                imageCapture.takePhoto()
-                    .then(blob => createImageBitmap(blob))
-                    .then(img => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
+        function takeSnapshot() {
+            // create a CANVAS element that is same size as the image
+            imageCapture.grabFrame()
+            .then(img => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
 
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
-                        $.ajax({
-                            url: "/images",
-                            type: "POST",
-                            data: base64EncodedImageData,
-                            contentType: "text/plain",
-                            success: function () {
-                            },
-                        })
-                            .then(response => {
-                                $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
-                            })
-                            .always(() => console.log('request complete'));
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
+                $.ajax({
+                    url: "/images",
+                    type: "POST",
+                    data: base64EncodedImageData,
+                    contentType: "text/plain",
+                    success: function() {},
+               })
+                .then(response => {
+                    $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
+                })
+                .always(() => console.log('request complete'));
 
-                        // For debugging, you can uncomment this to see the frame that was captured
-                        // $('BODY').append(canvas);
-                    });
+                // For debugging, you can uncomment this to see the frame that was captured
+                // $('BODY').append(canvas);
+            });
 
-            }
-            
+        }
+
             $('#start').on('click', startVideo);
             $('video').on('play', () => $('#snapshot').prop('disabled', false));
             $('#snapshot').on('click', takeSnapshot);
