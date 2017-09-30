@@ -9,10 +9,12 @@
             margin: 10px 0 20px 0;
         }
 
-        #add-receipt {
+        #add-receipt,#start-camera {
             width: 100px;
-            float: right
+            margin-right: 10px;
+            float: right;
         }
+
 
         #new-receipt-form {
             margin: 5px 5px 30px 5px;
@@ -165,10 +167,10 @@
             function attachMediaStream(mediaStream) {
                 $('video')[0].srcObject = mediaStream;
 
-            // Saving the track allows us to capture a photo
-            track = mediaStream.getVideoTracks()[0];
-            imageCapture = new ImageCapture(track);
-        }
+                // Saving the track allows us to capture a photo
+                track = mediaStream.getVideoTracks()[0];
+                imageCapture = new ImageCapture(track);
+            }
 
             function startVideo() {
                 navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: "environment"}}})
@@ -182,33 +184,34 @@
                     })
             }
 
-        function takeSnapshot() {
-            // create a CANVAS element that is same size as the image
-            imageCapture.grabFrame()
-            .then(img => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+            function takeSnapshot() {
+                // create a CANVAS element that is same size as the image
+                imageCapture.grabFrame()
+                    .then(img => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
 
-                canvas.getContext('2d').drawImage(img, 0, 0);
-                const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
-                $.ajax({
-                    url: "/images",
-                    type: "POST",
-                    data: base64EncodedImageData,
-                    contentType: "text/plain",
-                    success: function() {},
-               })
-                .then(response => {
-                    $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
-                })
-                .always(() => console.log('request complete'));
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
+                        $.ajax({
+                            url: "/images",
+                            type: "POST",
+                            data: base64EncodedImageData,
+                            contentType: "text/plain",
+                            success: function () {
+                            },
+                        })
+                            .then(response => {
+                                $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
+                            })
+                            .always(() => console.log('request complete'));
 
-                // For debugging, you can uncomment this to see the frame that was captured
-                // $('BODY').append(canvas);
-            });
+                        // For debugging, you can uncomment this to see the frame that was captured
+                        $('BODY').append(canvas);
+                    });
 
-        }
+            }
 
             $('#start').on('click', startVideo);
             $('video').on('play', () => $('#snapshot').prop('disabled', false));
@@ -231,10 +234,20 @@
             <h1>My receipts</h1>
         </div>
         <div class="col-md-6">
+            <button id="start-camera" class="btn btn-primary">📷</button>
             <button id="add-receipt" class="btn btn-primary">+</button>
         </div>
-
-
+    </div>
+    <div id="capture-receipt" class="row">
+        <div class="col-md-6">
+            <form>
+                <div id="vidwrap">
+                    <video autoplay></video>
+                </div>
+                <button id="take-pic-cancel" class="btn btn-danger">Cancel</button>
+                <button id="take-pic" class="btn btn-success">Snap</button>
+            </form>
+        </div>
     </div>
     <div id="new-receipt-form" class="row">
         <div class="col-md-6">
@@ -273,10 +286,6 @@
 <div>
     <button id="start">Start Video</button>
     <button id="snapshot" disabled="true">Take a Snapshot!</button>
-    <br>
-    <div id="vidwrap">
-        <video autoplay></video>
-    </div>
 </div>
 </body>
 

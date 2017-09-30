@@ -5,10 +5,7 @@ import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
 
 import java.math.BigDecimal;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -54,17 +51,25 @@ public class ReceiptImageController {
 
             // Sort text annotations by bounding polygon.  Top-most non-decimal text is the merchant
             // bottom-most decimal text is the total amount
-            List<EntityAnnotation> textAnnotations = res.getTextAnnotationsList();
+            List<EntityAnnotation> textAnnotations = new ArrayList<>(res.getTextAnnotationsList());
+
             Collections.sort(textAnnotations, new TopBottomComparator());
 
-            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+            for (EntityAnnotation annotation : textAnnotations) {
                 out.printf("Position : %s\n", annotation.getBoundingPoly());
                 out.printf("Text: %s\n", annotation.getDescription());
             }
 
+            EntityAnnotation fullReceipt = null;
+
             //get the top-most non-decimal string
             for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
                 String merchant = annotation.getDescription();
+                //ignore the full text summary, which contains line breaks
+                if (merchant.contains("\n")) {
+                    fullReceipt = annotation;
+                    continue;
+                }
                 try {
                     new BigDecimal(merchant);
                 } catch (NumberFormatException e) {
@@ -73,10 +78,18 @@ public class ReceiptImageController {
                 }
             }
 
+            if (fullReceipt != null) {
+                //use captured as the full receipt bounds
+            }
+
             //get the bottom-most decimal text
             for (int i = textAnnotations.size() - 1; i >= 0; i--) {
                 try {
                     String amt = textAnnotations.get(i).getDescription();
+                    if (amt.charAt(0) == '$') {
+                        amt = amt.substring(1);
+                    }
+
                     amount = new BigDecimal(amt);
                     break;
                 } catch (NumberFormatException e) {
