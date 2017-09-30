@@ -9,14 +9,13 @@
             margin: 10px 0 20px 0;
         }
 
-        #add-receipt,#start-camera {
+        #add-receipt, #start-camera {
             width: 100px;
             margin-right: 10px;
             float: right;
         }
 
-
-        #new-receipt-form {
+        #new-receipt-form, #capture-receipt {
             margin: 5px 5px 30px 5px;
             display: none;
         }
@@ -81,9 +80,21 @@
                 $("#new-receipt-form").hide();
             }
 
+            function setReceiptFormFields(receiptSuggestion) {
+                $("#merchant").val(receiptSuggestion.merchantName);
+                $("#amount").val(receiptSuggestion.amount);
+            }
+
             $("#add-receipt").click(function (e) {
                 e.preventDefault();
                 $("#new-receipt-form").show();
+                $("#capture-receipt").hide();
+            });
+
+            $("#start-camera").click(function (e) {
+                e.preventDefault();
+                $("#capture-receipt").show();
+                $("#new-receipt-form").hide();
             });
 
             $("#cancel-receipt").click(function (e) {
@@ -184,7 +195,8 @@
                     })
             }
 
-            function takeSnapshot() {
+            function takeSnapshot(e) {
+                e.preventDefault();
                 // create a CANVAS element that is same size as the image
                 imageCapture.grabFrame()
                     .then(img => {
@@ -194,6 +206,7 @@
 
                         canvas.getContext('2d').drawImage(img, 0, 0);
                         const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
+                        $("#take-pic").prop('disabled', true);
                         $.ajax({
                             url: "/images",
                             type: "POST",
@@ -203,19 +216,41 @@
                             },
                         })
                             .then(response => {
-                                $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
+                                if (response && response.hasOwnProperty("merchantName")
+                                    && response.hasOwnProperty("amount")) {
+                                    setReceiptFormFields(response);
+                                    $("#capture-receipt").hide();
+                                    $("#new-receipt-form").show();
+                                    console.log(response);
+                                } else {
+                                    console.log("Error processing image", response);
+                                }
                             })
-                            .always(() => console.log('request complete'));
+                            .always(() => {
+                                $("#take-pic").prop('disabled', false);
+                                console.log('request complete')
+                            });
 
                         // For debugging, you can uncomment this to see the frame that was captured
-                        $('BODY').append(canvas);
+                        //$('BODY').append(canvas);
                     });
 
             }
 
-            $('#start').on('click', startVideo);
-            $('video').on('play', () => $('#snapshot').prop('disabled', false));
-            $('#snapshot').on('click', takeSnapshot);
+            $('#start-camera').on('click', () => {
+                $("#new-receipt-form").hide();
+                $("#capture-receipt").show();
+                startVideo();
+
+            });
+            $('video').on('play', () => $('#take-pic').prop('disabled', false));
+
+            $('#take-pic').on('click', takeSnapshot);
+
+            $("#take-pic-cancel").on('click', (e) => {
+                e.preventDefault()
+                $("#capture-receipt").hide();
+            })
         });
     </script>
     <!--
@@ -245,7 +280,7 @@
                     <video autoplay></video>
                 </div>
                 <button id="take-pic-cancel" class="btn btn-danger">Cancel</button>
-                <button id="take-pic" class="btn btn-success">Snap</button>
+                <button id="take-pic" disabled="true" class="btn btn-success">Snap</button>
             </form>
         </div>
     </div>
@@ -283,10 +318,6 @@
     </div>
 
 </DIV>
-<div>
-    <button id="start">Start Video</button>
-    <button id="snapshot" disabled="true">Take a Snapshot!</button>
-</div>
 </body>
 
 </html>
