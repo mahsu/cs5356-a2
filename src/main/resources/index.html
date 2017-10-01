@@ -89,16 +89,12 @@
                 e.preventDefault();
                 $("#new-receipt-form").show();
                 $("#capture-receipt").hide();
-            });
-
-            $("#start-camera").click(function (e) {
-                e.preventDefault();
-                $("#capture-receipt").show();
-                $("#new-receipt-form").hide();
+                $("#vidwrap video").remove();
             });
 
             $("#cancel-receipt").click(function (e) {
                 e.preventDefault();
+                $("#vidwrap video").remove();
                 clearReceiptFormFields();
             });
 
@@ -181,6 +177,7 @@
                 // Saving the track allows us to capture a photo
                 track = mediaStream.getVideoTracks()[0];
                 imageCapture = new ImageCapture(track);
+                $("#take-pic").prop("disabled", false);
             }
 
             function startVideo() {
@@ -228,6 +225,7 @@
                             })
                             .always(() => {
                                 $("#take-pic").prop('disabled', false);
+                                $("#vidwrap video").remove();
                                 console.log('request complete')
                             });
 
@@ -237,7 +235,11 @@
 
             }
 
-            $('#start-camera').on('click', () => {
+            $('#start-camera').on('click', (e) => {
+                e.preventDefault();
+                if ($("#vidwrap video").length == 0) {
+                    $("#vidwrap").append("<video autoplay></video>");
+                }
                 $("#new-receipt-form").hide();
                 $("#capture-receipt").show();
                 startVideo();
@@ -248,7 +250,8 @@
             $('#take-pic').on('click', takeSnapshot);
 
             $("#take-pic-cancel").on('click', (e) => {
-                e.preventDefault()
+                $("#vidwrap video").remove();
+                e.preventDefault();
                 $("#capture-receipt").hide();
             })
         });
@@ -277,7 +280,6 @@
         <div class="col-md-6">
             <form>
                 <div id="vidwrap">
-                    <video autoplay></video>
                 </div>
                 <button id="take-pic-cancel" class="btn btn-danger">Cancel</button>
                 <button id="take-pic" disabled="true" class="btn btn-success">Snap</button>
