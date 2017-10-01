@@ -30,13 +30,17 @@ public class ReceiptResponse {
     Time created;
 
     @JsonProperty
+    String b64image;
+
+    @JsonProperty
     List<String> tags;
 
-    public ReceiptResponse(ReceiptsRecord dbRecord, List<String> tags) {
+    public ReceiptResponse(ReceiptsRecord dbRecord, List<String> tags, String b64image) {
         this.merchantName = dbRecord.getMerchant();
         this.value = dbRecord.getAmount();
         this.created = dbRecord.getUploaded();
         this.id = dbRecord.getId();
         this.tags = tags;
+        this.b64image = b64image;
     }
 }

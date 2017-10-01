@@ -29,7 +29,7 @@ public class ReceiptController {
 
     @POST
     public int createReceipt(@Valid @NotNull CreateReceiptRequest receipt) {
-        return receipts.insert(receipt.merchant, receipt.amount);
+        return receipts.insert(receipt.merchant, receipt.amount, receipt.image);
     }
 
     @GET
@@ -39,7 +39,7 @@ public class ReceiptController {
 
         for (ReceiptsRecord r : receiptRecords) {
             List<String> tagsForReceipt = tags.getTagsForReceipt(r.getId());
-            resp.add(new ReceiptResponse(r, tagsForReceipt));
+            resp.add(new ReceiptResponse(r, tagsForReceipt, r.getB64image()));
         }
         return resp;
     }

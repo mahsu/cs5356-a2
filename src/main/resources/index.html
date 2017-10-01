@@ -43,6 +43,7 @@
             integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
             crossorigin="anonymous"></script>
     <script>
+        var currentImage = null;
         let imageCapture;
         let track;
         // This is the idiomatic way to ensure that JQuery does not
@@ -64,12 +65,21 @@
                     tagstr += `<button class="btn btn-default tagValue" data-tag-value="${tag}">${tag} x</button>`
                 }
                 tagstr += "<button class='btn btn-primary add-tag'>Add +</button>";
+
                 $(`<div class="row receipt" data-receipt-id="${receipt.id}">
-                        <div class="col-md-3 created">${receipt.created}</div>
-                        <div class="col-md-3 merchant">${receipt.merchantName}</div>
-                        <div class="col-md-3 amount">${receipt["value"]}</div>
+                        <div class="col-md-4 thumbnail"></div>
+                        <div class="col-md-2 created">${receipt.created}</div>
+                        <div class="col-md-2 merchant">${receipt.merchantName}</div>
+                        <div class="col-md-1 amount">${receipt["value"]}</div>
                         <div class="col-md-3 tags">${tagstr}</div>
                         </div>`).appendTo("#receiptList");
+
+                if (receipt.b64image !== null) {
+                    var image = new Image();
+                    image.src = receipt.b64image;
+                    document.body.appendChild(image);
+                    $(`#receiptList .row.receipt[data-receipt-id='${receipt.id}'] .thumbnail`).append(image);
+                }
 
 
             }
@@ -78,6 +88,7 @@
                 $("#merchant").val("");
                 $("#amount").val("");
                 $("#new-receipt-form").hide();
+                currentImage = null;
             }
 
             function setReceiptFormFields(receiptSuggestion) {
@@ -95,14 +106,17 @@
             $("#cancel-receipt").click(function (e) {
                 e.preventDefault();
                 $("#vidwrap video").remove();
+                currentImage = null;
                 clearReceiptFormFields();
             });
 
             $("#save-receipt").click(function (e) {
                 e.preventDefault();
+                var img = currentImage;
                 var formdata = {
                     merchant: $("#merchant").val(),
-                    amount: $("#amount").val()
+                    amount: $("#amount").val(),
+                    image: img
                 };
                 $.ajax({
                     type: "POST",
@@ -121,6 +135,7 @@
                             value: formdata.amount,
                             id: data,
                             created: date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds(),
+                            b64image: img,
                             tags: []
                         };
                         addReceiptRow(receipt);
@@ -195,13 +210,15 @@
             function takeSnapshot(e) {
                 e.preventDefault();
                 // create a CANVAS element that is same size as the image
+                const canvas = document.createElement('canvas');
+                var ctxOrig = canvas.getContext('2d');
                 imageCapture.grabFrame()
                     .then(img => {
-                        const canvas = document.createElement('canvas');
                         canvas.width = img.width;
                         canvas.height = img.height;
 
-                        canvas.getContext('2d').drawImage(img, 0, 0);
+
+                        ctxOrig.drawImage(img, 0, 0);
                         const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
                         $("#take-pic").prop('disabled', true);
                         $.ajax({
@@ -213,12 +230,30 @@
                             },
                         })
                             .then(response => {
+                                console.log(response);
                                 if (response && response.hasOwnProperty("merchantName")
                                     && response.hasOwnProperty("amount")) {
                                     setReceiptFormFields(response);
                                     $("#capture-receipt").hide();
                                     $("#new-receipt-form").show();
-                                    console.log(response);
+
+                                    //crop the image
+                                    //https://stackoverflow.com/questions/28538913/crop-an-image-displayed-in-a-canvas
+                                    var min = {x: response.xmin, y: response.ymin};
+                                    var max = {x: response.xmax, y: response.ymax};
+                                    console.log(min, max);
+                                    var imageData = ctxOrig.getImageData(min.x, min.y, max.x, max.y);
+                                    var newCanvas = document.createElement("canvas");
+                                    newCanvas.width = max.x - min.x + 1;
+                                    newCanvas.height = max.y - min.y + 1;
+                                    var ctxNew = newCanvas.getContext("2d");
+                                    ctxNew.rect(0, 0, newCanvas.width, newCanvas.height);
+                                    ctxNew.fillStyle = 'white';
+                                    ctxNew.fill();
+                                    ctxNew.putImageData(imageData, 0, 0);
+                                    resizeTo(newCanvas, 0.5, 0.5);
+                                    currentImage = newCanvas.toDataURL('image/png');
+                                    //$('BODY').append(newCanvas);
                                 } else {
                                     console.log("Error processing image", response);
                                 }
@@ -233,6 +268,21 @@
                         //$('BODY').append(canvas);
                     });
 
+            }
+
+            //canvas resizing code taken from https://stackoverflow.com/questions/34866171/resize-html-canvas-with-scale
+            function resizeTo(canvas, pct) {
+                var tempCanvas = document.createElement("canvas");
+                var tctx = tempCanvas.getContext("2d");
+                var cw = canvas.width;
+                var ch = canvas.height;
+                tempCanvas.width = cw;
+                tempCanvas.height = ch;
+                tctx.drawImage(canvas, 0, 0);
+                canvas.width *= pct;
+                canvas.height *= pct;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(tempCanvas, 0, 0, cw, ch, 0, 0, cw * pct, ch * pct);
             }
 
             $('#start-camera').on('click', (e) => {
@@ -252,6 +302,8 @@
             $("#take-pic-cancel").on('click', (e) => {
                 $("#vidwrap video").remove();
                 e.preventDefault();
+                currentImage = null;
+                clearReceiptFormFields();
                 $("#capture-receipt").hide();
             })
         });
@@ -303,13 +355,16 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-4">
+            <h5>Thumbnail</h5>
+        </div>
+        <div class="col-md-2">
             <h5>Time</h5>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <h5>Merchant</h5>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-1">
             <h5>$</h5>
         </div>
         <div class="col-md-3">

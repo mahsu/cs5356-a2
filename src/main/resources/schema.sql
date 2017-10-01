@@ -3,6 +3,7 @@ CREATE TABLE receipts (
   uploaded TIME DEFAULT CURRENT_TIME(),
   merchant VARCHAR(255),
   amount DECIMAL(12,2),
+  b64image MEDIUMTEXT,
   receipt_type INT UNSIGNED,
 
   PRIMARY KEY (id)

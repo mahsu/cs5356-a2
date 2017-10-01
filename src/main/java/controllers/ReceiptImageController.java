@@ -39,8 +39,10 @@ public class ReceiptImageController {
      */
     @POST
     public ReceiptSuggestionResponse parseReceipt(@NotEmpty String base64EncodedImage) throws Exception {
-        Image img = Image.newBuilder().setContent(ByteString.copyFrom(Base64.getDecoder().decode(base64EncodedImage))).build();
-        AnnotateImageRequest request = this.requestBuilder.setImage(img).build();
+        byte[] imagebytes = Base64.getDecoder().decode(base64EncodedImage);
+        Image gimg = Image.newBuilder().setContent(ByteString.copyFrom(imagebytes)).build();
+
+        AnnotateImageRequest request = this.requestBuilder.setImage(gimg).build();
 
         try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
             BatchAnnotateImagesResponse responses = client.batchAnnotateImages(Collections.singletonList(request));
@@ -77,10 +79,23 @@ public class ReceiptImageController {
                     break;
                 }
             }
-
-            if (fullReceipt != null) {
-                //use captured as the full receipt bounds
+            if (fullReceipt == null) {
+                fullReceipt = res.getTextAnnotationsList().get(0);
             }
+
+            int xmin, xmax, ymin, ymax;
+            //use captured as the full receipt bounds
+            BoundingPoly bounds = fullReceipt.getBoundingPoly();
+            Vertex v1, v2, v3, v4;
+            v1 = bounds.getVertices(0);
+            v2 = bounds.getVertices(1);
+            v3 = bounds.getVertices(2);
+            v4 = bounds.getVertices(3);
+
+            xmin = Math.min(v1.getX(),Math.min(v2.getX(),Math.min(v3.getX(),v4.getX())));
+            xmax = Math.max(v1.getX(),Math.max(v2.getX(),Math.max(v3.getX(),v4.getX())));
+            ymin = Math.min(v1.getY(),Math.min(v2.getY(),Math.min(v3.getY(),v4.getY())));
+            ymax = Math.max(v1.getY(),Math.max(v2.getY(),Math.max(v3.getY(),v4.getY())));
 
             //get the bottom-most decimal text
             for (int i = textAnnotations.size() - 1; i >= 0; i--) {
@@ -97,7 +112,7 @@ public class ReceiptImageController {
             }
 
             //TextAnnotation fullTextAnnotation = res.getFullTextAnnotation();
-            return new ReceiptSuggestionResponse(merchantName, amount);
+            return new ReceiptSuggestionResponse(merchantName, amount, xmin, ymin, xmax, ymax);
         }
     }
 

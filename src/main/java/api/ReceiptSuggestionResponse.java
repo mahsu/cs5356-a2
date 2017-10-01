@@ -13,9 +13,25 @@ public class ReceiptSuggestionResponse {
     @JsonProperty
     public final BigDecimal amount;
 
+    @JsonProperty
+    public final Integer xmin;
 
-    public ReceiptSuggestionResponse(String merchantName, BigDecimal amount) {
+    @JsonProperty
+    public final Integer xmax;
+
+    @JsonProperty
+    public final Integer ymin;
+
+    @JsonProperty
+    public final Integer ymax;
+
+
+    public ReceiptSuggestionResponse(String merchantName, BigDecimal amount, Integer xmin, Integer ymin, Integer xmax, Integer ymax) {
         this.merchantName = merchantName;
         this.amount = amount;
+        this.xmax = xmax;
+        this.ymax = ymax;
+        this.xmin = xmin;
+        this.ymin = ymin;
     }
 }
