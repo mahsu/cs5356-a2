@@ -57,10 +57,11 @@ public class ReceiptImageController {
 
             Collections.sort(textAnnotations, new TopBottomComparator());
 
+            /*
             for (EntityAnnotation annotation : textAnnotations) {
                 out.printf("Position : %s\n", annotation.getBoundingPoly());
                 out.printf("Text: %s\n", annotation.getDescription());
-            }
+            }*/
 
             EntityAnnotation fullReceipt = null;
 

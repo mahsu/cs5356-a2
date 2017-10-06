@@ -67,11 +67,11 @@
                 tagstr += "<button class='btn btn-primary add-tag'>Add +</button>";
 
                 $(`<div class="row receipt" data-receipt-id="${receipt.id}">
-                        <div class="col-md-4 thumbnail"></div>
                         <div class="col-md-2 created">${receipt.created}</div>
                         <div class="col-md-2 merchant">${receipt.merchantName}</div>
                         <div class="col-md-1 amount">${receipt["value"]}</div>
                         <div class="col-md-3 tags">${tagstr}</div>
+                        <div class="col-md-4 thumbnail"></div>
                         </div>`).appendTo("#receiptList");
 
                 if (receipt.b64image !== null) {
@@ -183,9 +183,6 @@
                 })
             });
 
-
-            let imageCapture;
-
             function attachMediaStream(mediaStream) {
                 $('video')[0].srcObject = mediaStream;
 
@@ -241,7 +238,6 @@
                                     //https://stackoverflow.com/questions/28538913/crop-an-image-displayed-in-a-canvas
                                     var min = {x: response.xmin, y: response.ymin};
                                     var max = {x: response.xmax, y: response.ymax};
-                                    console.log(min, max);
                                     var imageData = ctxOrig.getImageData(min.x, min.y, max.x, max.y);
                                     var newCanvas = document.createElement("canvas");
                                     newCanvas.width = max.x - min.x + 1;
@@ -355,9 +351,6 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-4">
-            <h5>Thumbnail</h5>
-        </div>
         <div class="col-md-2">
             <h5>Time</h5>
         </div>
@@ -369,6 +362,9 @@
         </div>
         <div class="col-md-3">
             <h5>Tags</h5>
+        </div>
+        <div class="col-md-4">
+            <h5>Image</h5>
         </div>
     </div>
     <div id="receiptList">
